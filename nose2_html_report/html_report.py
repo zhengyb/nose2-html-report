@@ -6,26 +6,34 @@ import traceback
 import unittest
 from nose2.events import Plugin
 from datetime import datetime
+import time
 
 from .render import load_template, render_template
 
 logger = logging.getLogger(__name__)
 
+__unittest = True
+
 
 class HTMLReporter(Plugin):
     configSection = 'html-report'
-    commandLineSwitch = (None, 'html-report', 'Generate an HTML report containing test results')
+    commandLineSwitch = (None, 'html-report',
+                         'Generate an HTML report containing test results')
 
     def __init__(self, *args, **kwargs):
         super(HTMLReporter, self).__init__(*args, **kwargs)
         self.summary_stats = {'total': 0}
         self.test_results = []
-        default_template_path = os.path.join(os.path.dirname(__file__), 'templates', 'report.html') 
+        default_template_path = os.path.join(
+            os.path.dirname(__file__), 'templates', 'report.html')
 
         self._config = {
+            'report_title': self.config.as_str('title', default='Test Report'),
+            'test_id': self.config.as_str('test_id', default='Test01'),
             'report_path': os.path.realpath(self.config.as_str('path', default='report.html')),
             'template':  os.path.realpath(self.config.as_str('template', default=default_template_path))
         }
+        self._start = None
 
     def _sort_test_results(self):
         return sorted(self.test_results, key=lambda x: x['name'])
@@ -59,6 +67,24 @@ class HTMLReporter(Plugin):
 
         return search_terms
 
+    def startTest(self, event):
+        """
+        Record start time
+        Fix Me: this function is not called, why?!
+        """
+        print("startTest")
+        self._start = event.startTime
+
+    def _time(self):
+        try:
+            return time.time() - self._start
+        except Exception:
+            pass
+        finally:
+            self._start = None
+        print("bad _time() return")
+        return 0
+
     def testOutcome(self, event):
         """
         Reports the outcome of each test
@@ -86,13 +112,16 @@ class HTMLReporter(Plugin):
             self.summary_stats[event.outcome] = 1
         self.summary_stats['total'] += 1
 
+        delta_time = "%f" % self._time()
         self.test_results.append({
             'name': test_case_import_path,
             'description': test_case_doc,
             'result': event.outcome,
             'traceback': formatted_traceback,
-            'metadata': copy.copy(event.metadata)
+            'metadata': copy.copy(event.metadata),
+            'time': delta_time
         })
+        print("\ntime: %s" % delta_time)
 
     def afterSummaryReport(self, event):
         """
@@ -102,8 +131,10 @@ class HTMLReporter(Plugin):
 
         sorted_test_results = self._sort_test_results()
 
+        #self.summary_stats['Test ID'] = self._config['test_id']
         context = {
             'test_report_title': 'Test Report',
+            'test_id': self._config['test_id'],
             'test_summary': self.summary_stats,
             'test_results': sorted_test_results,
             'autocomplete_terms': json.dumps(self._generate_search_terms()),
