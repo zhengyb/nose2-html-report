@@ -34,6 +34,7 @@ class HTMLReporter(Plugin):
             'template':  os.path.realpath(self.config.as_str('template', default=default_template_path))
         }
         self._start = None
+        self.init_time = time.time()
 
     def _sort_test_results(self):
         return sorted(self.test_results, key=lambda x: x['name'])
@@ -113,6 +114,7 @@ class HTMLReporter(Plugin):
         self.summary_stats['total'] += 1
 
         delta_time = "%f" % self._time()
+        #delta_time = "%f" % event.timeTaken
         self.test_results.append({
             'name': test_case_import_path,
             'description': test_case_doc,
@@ -133,11 +135,12 @@ class HTMLReporter(Plugin):
 
         #self.summary_stats['Test ID'] = self._config['test_id']
         context = {
-            'test_report_title': 'Test Report',
+            'test_report_title': self._config['report_title'],
             'test_id': self._config['test_id'],
             'test_summary': self.summary_stats,
             'test_results': sorted_test_results,
             'autocomplete_terms': json.dumps(self._generate_search_terms()),
+            'total_time' : "%f" % (time.time() - self.init_time),
             'timestamp': datetime.utcnow().strftime('%Y/%m/%d %H:%M:%S UTC')
         }
         template = load_template(self._config['template'])
