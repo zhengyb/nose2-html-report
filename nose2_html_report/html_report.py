@@ -119,6 +119,7 @@ class HTMLReporter(Plugin):
             'name': test_case_import_path,
             'description': test_case_doc,
             'result': event.outcome,
+            'reason': event.reason,
             'traceback': formatted_traceback,
             'metadata': copy.copy(event.metadata),
             'time': delta_time
