@@ -142,7 +142,7 @@ class HTMLReporter(Plugin):
             'test_results': sorted_test_results,
             'autocomplete_terms': json.dumps(self._generate_search_terms()),
             'total_time' : "%f" % (time.time() - self.init_time),
-            'timestamp': datetime.utcnow().strftime('%Y/%m/%d %H:%M:%S UTC')
+            'timestamp': datetime.now().strftime('%Y/%m/%d %H:%M:%S')
         }
         template = load_template(self._config['template'])
         rendered_template = render_template(template, context)
