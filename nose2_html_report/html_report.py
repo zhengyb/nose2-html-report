@@ -114,17 +114,29 @@ class HTMLReporter(Plugin):
         self.summary_stats['total'] += 1
 
         delta_time = "%f" % self._time()
-        #delta_time = "%f" % event.timeTaken
-        self.test_results.append({
+
+        test_result = {
             'name': test_case_import_path,
             'description': test_case_doc,
             'result': event.outcome,
             'reason': event.reason,
+            'pic_file': None,
             'traceback': formatted_traceback,
             'metadata': copy.copy(event.metadata),
             'time': delta_time
-        })
-        print("\ntime: %s" % delta_time)
+        }
+
+        if "ui_test" in test_case_import_path:
+            report_dir = os.path.dirname(self._config['report_path'])
+            test_pic = self.getTestPic(test_case_import_path)
+            filename = os.path.realpath(report_dir + "/" + test_pic)
+            if os.path.exists(filename):
+                test_result['pic_file'] = test_pic
+
+        self.test_results.append(test_result)
+
+    def getTestPic(self, testcase_id):
+        return "./pics/" + self._config['test_id'] + "/" + testcase_id + ".png"
 
     def afterSummaryReport(self, event):
         """
@@ -141,7 +153,7 @@ class HTMLReporter(Plugin):
             'test_summary': self.summary_stats,
             'test_results': sorted_test_results,
             'autocomplete_terms': json.dumps(self._generate_search_terms()),
-            'total_time' : "%f" % (time.time() - self.init_time),
+            'total_time': "%f" % (time.time() - self.init_time),
             'timestamp': datetime.now().strftime('%Y/%m/%d %H:%M:%S')
         }
         template = load_template(self._config['template'])
