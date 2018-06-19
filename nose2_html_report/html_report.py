@@ -138,6 +138,9 @@ class HTMLReporter(Plugin):
     def getTestPic(self, testcase_id):
         return "./pics/" + self._config['test_id'] + "/" + testcase_id + ".png"
 
+    def getLogFile(self):
+        return "./logs/" + self._config['test_id'] + ".log"
+
     def afterSummaryReport(self, event):
         """
         After everything is done, generate the report
@@ -147,15 +150,24 @@ class HTMLReporter(Plugin):
         sorted_test_results = self._sort_test_results()
 
         #self.summary_stats['Test ID'] = self._config['test_id']
+
+        log_file = None
         context = {
             'test_report_title': self._config['report_title'],
             'test_id': self._config['test_id'],
+            'test_log': log_file,
             'test_summary': self.summary_stats,
             'test_results': sorted_test_results,
             'autocomplete_terms': json.dumps(self._generate_search_terms()),
             'total_time': "%f" % (time.time() - self.init_time),
             'timestamp': datetime.now().strftime('%Y/%m/%d %H:%M:%S')
         }
+        report_dir = os.path.dirname(self._config['report_path'])
+        log_file = self.getLogFile()
+        filename = os.path.realpath(report_dir + "/" + log_file)
+        if os.path.exists(filename):
+            context['test_log'] = log_file
+
         template = load_template(self._config['template'])
         rendered_template = render_template(template, context)
         with open(self._config['report_path'], 'w') as template_file:
