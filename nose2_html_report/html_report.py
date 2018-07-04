@@ -73,7 +73,7 @@ class HTMLReporter(Plugin):
         Record start time
         Fix Me: this function is not called, why?!
         """
-        print("startTest")
+        #print("startTest")
         self._start = event.startTime
 
     def _time(self):
